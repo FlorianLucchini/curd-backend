@@ -1,13 +1,14 @@
 import express from 'express';
-import { getUsers, createUser, getUserById, updateUser, deleteUser } from '../controllers/userController.js';
+import { getUsers, createUser, loginUser, getUserById, updateUser, deleteUser } from '../controllers/userController.js';
+import { validateUser, validateLogin } from '../middlewares/validationMiddleware.js';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-// Rutas
-router.get('/', getUsers); // Obtain all users
-router.post('/', createUser); // Create a new user
-router.get('/:id', getUserById); // Obtain a user by ID
-router.put('/:id', updateUser); // Update a user by ID
-router.delete('/:id', deleteUser); // Delete a user by ID
-
+router.post('/register', validateUser, createUser);
+router.post('/login', validateLogin, loginUser);
+router.get('/', authMiddleware, getUsers);
+router.get('/:id', authMiddleware, getUserById);
+router.put('/:id', authMiddleware, updateUser);
+router.delete('/:id', authMiddleware, deleteUser);
 export default router;
