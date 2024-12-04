@@ -17,11 +17,11 @@ const userSchema = new Schema({
     required: true,
   },
   photo: {
-    type: String, // Almacena la URL o ruta de la foto
-    default: '', // Foto predeterminada
+    type: String,
+    default: '',
   },
 }, { 
-  timestamps: true // Esto agrega automáticamente campos createdAt y updatedAt
+  timestamps: true
 });
 
 export default mongoose.model('User', userSchema);

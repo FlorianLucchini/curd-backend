@@ -5,13 +5,10 @@ import userRoutes from './routes/userRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Conect to database
 connectDB();
 
-// Middleware
 app.use(express.json());
 
-// Routes
 app.use('/api/users', userRoutes);
 
 app.get('/', (req, res) => {
