@@ -26,6 +26,12 @@ const userSchema = new Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    companyName: {
+      type: String,
+      required: function () {
+        return this.role === "admin";
+      },
+    },
   },
   {
     timestamps: true,

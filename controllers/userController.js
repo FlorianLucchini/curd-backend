@@ -4,7 +4,7 @@ import User from "../models/User.js";
 
 export const createUser = async (req, res) => {
   try {
-    const { name, email, password, photo } = req.body;
+    const { name, email, password, photo, role, companyName } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -13,11 +13,20 @@ export const createUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    let userRole = "user";
+    let userCompany = null;
+
+    if (req.user && req.user.role === "admin") {
+      userRole = role || "user";
+      userCompany = req.user.companyName;
+    }
+
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
       photo,
+      role: userRole,
     });
 
     await newUser.save();
@@ -55,9 +64,27 @@ export const loginUser = async (req, res) => {
 };
 
 export const getUsers = async (req, res) => {
+  const { page = 1, limit = 10, name, email } = req.query;
+
   try {
-    const users = await User.find();
-    res.status(200).json(users);
+    const skip = (page - 1) * limit;
+
+    const filters = {};
+    if (name) filters.name = new RegExp(name, 'i');
+    if (email) filters.email = email;
+
+    const users = await User.find(filters)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await User.countDocuments(filters);
+
+    res.status(200).json({
+      users,
+      total,
+      page: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     res.status(500).json({ message: "Error obtaining users", error });
   }
@@ -108,14 +135,18 @@ export const deleteUser = async (req, res) => {
   try {
     const userId = req.params.id;
 
-    const deletedUser = await User.findByIdAndDelete(userId);
-
-    if (!deletedUser) {
-      return res.status(404).json({ message: "User not found" });
+    // Evitar que un admin se elimine a sí mismo
+    if (req.user.id === userId) {
+      return res.status(400).json({ message: "You cannot delete yourself" });
     }
 
-    res.status(200).json({ message: "User deleted", deleteUser: deletedUser });
+    const deletedUser = await User.findByIdAndDelete(userId);
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting user", error });
+    res.status(500).json({ message: 'Error deleting user', error });
   }
 };
